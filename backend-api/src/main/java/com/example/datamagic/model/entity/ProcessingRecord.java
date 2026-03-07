@@ -1,7 +1,7 @@
 package com.example.datamagic.model.entity;
 
 import com.example.datamagic.model.enums.ProcessingStatus;
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 

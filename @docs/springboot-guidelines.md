@@ -2,6 +2,11 @@
 
 This document provides best practices for Spring Boot application development.
 
+## Version Requirements
+
+- **Java Version**: 11
+- **Spring Boot Version**: 2.7.18
+
 ## 1 Project Structure
 
 ### 1.1 Standard Package Structure

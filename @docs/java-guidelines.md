@@ -2,6 +2,13 @@
 
 This document defines the coding standards for Java source code, based on the Google Java Style Guide.
 
+## Version Requirements
+
+- **Java Version**: 11
+- **Spring Boot Version**: 2.7.18
+
+All Java code must be compatible with Java 11 and use Spring Boot 2.7.18.
+
 ## 1 Source File Basics
 
 ### 1.1 File Name
