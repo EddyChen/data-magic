@@ -89,11 +89,12 @@ public class FileProcessingService {
                 record.setStatus(ProcessingStatus.uploaded);
             }
 
-            boolean sourceDeleted = deleteSourceFile(filePath);
-            if (sourceDeleted) {
-                record.setSourceDeleted(true);
-                record.setSourceDeleteTime(LocalDateTime.now());
-            }
+            // Commented out: don't delete source file after processing
+            // boolean sourceDeleted = deleteSourceFile(filePath);
+            // if (sourceDeleted) {
+            //     record.setSourceDeleted(true);
+            //     record.setSourceDeleteTime(LocalDateTime.now());
+            // }
 
             processingRecordService.saveEntity(record);
             log.info("File processed successfully: {} -> {}", filePath, targetFilePath);
@@ -146,21 +147,28 @@ public class FileProcessingService {
     private String applyTransformation(String fieldValue, TransformationRule rule) {
         String transformationType = rule.getTransformationType();
         String params = rule.getTransformationParams();
+        String pattern = rule.getRulePattern();
+
+        String baseValue = removeSuffix(fieldValue, pattern);
+        String transformedValue = baseValue;
 
         if ("remove_suffix".equals(transformationType)) {
-            return removeSuffix(fieldValue, params);
+            transformedValue = baseValue;
         } else if ("replace".equals(transformationType)) {
-            return replaceTransformation(fieldValue, params);
+            transformedValue = replaceTransformation(baseValue, params);
         } else if ("hash".equals(transformationType)) {
-            return hashTransformation(fieldValue);
+            transformedValue = hashTransformation(baseValue);
         } else if ("mask".equals(transformationType)) {
-            return maskTransformation(fieldValue, params);
+            transformedValue = maskTransformation(baseValue, params);
+        } else if ("encrypt".equals(transformationType)) {
+            transformedValue = baseValue;
         }
-        return fieldValue;
+
+        return transformedValue;
     }
 
     private String removeSuffix(String value, String suffix) {
-        if (suffix == null || !value.endsWith(suffix)) {
+        if (suffix == null || suffix.isEmpty() || !value.endsWith(suffix)) {
             return value;
         }
         return value.substring(0, value.length() - suffix.length());
@@ -178,15 +186,35 @@ public class FileProcessingService {
     }
 
     private String hashTransformation(String value) {
-        return String.valueOf(value.hashCode());
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = md.digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return String.valueOf(value.hashCode());
+        }
     }
 
     private String maskTransformation(String value, String params) {
-        if (value.length() <= 4) {
+        int showLast = 4;
+        if (params != null && params.contains("showLast")) {
+            try {
+                int idx = params.indexOf("showLast");
+                int start = params.indexOf(":", idx) + 1;
+                int end = params.indexOf("}", start);
+                showLast = Integer.parseInt(params.substring(start, end).trim());
+            } catch (Exception e) {
+                showLast = 4;
+            }
+        }
+        if (value.length() <= showLast) {
             return "*".repeat(value.length());
         }
-        int visibleChars = params != null ? Integer.parseInt(params) : 4;
-        return value.substring(0, visibleChars) + "*".repeat(value.length() - visibleChars);
+        return value.substring(0, showLast) + "*".repeat(value.length() - showLast);
     }
 
     private int countTransformedFields(String originalLine, String transformedLine) {
@@ -224,7 +252,7 @@ public class FileProcessingService {
 
         File sourceFile = new File(sourceFilePath);
         String baseName = sourceFile.getName();
-        baseName = baseName.replace(FILE_PATTERN, "_BJ_");
+        baseName = baseName.replace("SJBX", "BXJG");
 
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         String targetFileName = baseName + "_" + timestamp;

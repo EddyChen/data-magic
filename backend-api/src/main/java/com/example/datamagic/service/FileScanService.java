@@ -13,7 +13,7 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class FileScanService {
 
-    private static final String FILE_PATTERN = "_SJBX_";
+    private static final String FILE_PATTERN = "SJBX";
 
     private final FileProcessingService fileProcessingService;
     private final SystemConfigService systemConfigService;
