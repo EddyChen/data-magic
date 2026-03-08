@@ -23,4 +23,8 @@ public interface ProcessingRecordRepository extends JpaRepository<ProcessingReco
 
     Page<ProcessingRecord> findByCreatedAtBetweenOrderByCreatedAtDesc(
             LocalDateTime startTime, LocalDateTime endTime, Pageable pageable);
+
+    List<ProcessingRecord> findBySourceFilePath(String sourceFilePath);
+
+    boolean existsBySourceFilePathAndStatusIn(String sourceFilePath, List<ProcessingStatus> statuses);
 }

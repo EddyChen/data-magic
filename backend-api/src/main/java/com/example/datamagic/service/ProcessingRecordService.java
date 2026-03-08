@@ -13,12 +13,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ProcessingRecordService {
+
+    private static final List<ProcessingStatus> PROCESSED_STATUSES = Arrays.asList(
+            ProcessingStatus.processing,
+            ProcessingStatus.completed,
+            ProcessingStatus.uploaded
+    );
 
     private final ProcessingRecordRepository processingRecordRepository;
 
@@ -90,6 +97,10 @@ public class ProcessingRecordService {
 
     public ProcessingRecord saveEntity(ProcessingRecord record) {
         return processingRecordRepository.save(record);
+    }
+
+    public boolean isFileProcessed(String sourceFilePath) {
+        return processingRecordRepository.existsBySourceFilePathAndStatusIn(sourceFilePath, PROCESSED_STATUSES);
     }
 
     private PageResult<ProcessingRecordDTO> toPageResult(Page<ProcessingRecord> page) {

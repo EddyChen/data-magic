@@ -17,6 +17,7 @@ public class FileScanService {
 
     private final FileProcessingService fileProcessingService;
     private final SystemConfigService systemConfigService;
+    private final ProcessingRecordService processingRecordService;
 
     @Scheduled(cron = "${file.scan.cron:0 */5 * * * *}")
     public void scanAndProcessFiles() {
@@ -45,9 +46,14 @@ public class FileScanService {
                 .filter(File::isFile)
                 .sorted((f1, f2) -> Long.compare(f1.lastModified(), f2.lastModified()))
                 .forEach(file -> {
+                    String filePath = file.getAbsolutePath();
+                    if (processingRecordService.isFileProcessed(filePath)) {
+                        log.info("Skipping already processed file: {}", file.getName());
+                        return;
+                    }
                     try {
-                        log.info("Processing file: {}", file.getAbsolutePath());
-                        fileProcessingService.processFile(file.getAbsolutePath());
+                        log.info("Processing file: {}", filePath);
+                        fileProcessingService.processFile(filePath);
                     } catch (Exception e) {
                         log.error("Error processing file: {}", file.getName(), e);
                     }
